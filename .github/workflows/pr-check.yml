@@ -1,0 +1,42 @@
+name: PR Validation
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  validate:
+    name: Validate PR
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install fastapi pydantic pydantic-settings prometheus-client \
+            structlog python-dotenv redis httpx pytest pytest-asyncio uvicorn
+
+      - name: Run tests
+        run: pytest tests/ -v
+
+      - name: Validate Kubernetes YAML
+        run: |
+          for f in deployment/k8s/base/*.yaml; do
+            python3 -c "import yaml; list(yaml.safe_load_all(open('$f')))" \
+              && echo "✅ $f valid" \
+              || (echo "❌ $f invalid" && exit 1)
+          done
+
+      - name: Check Dockerfile syntax
+        run: |
+          for f in deployment/docker/Dockerfile.*; do
+            docker build --check -f $f . 2>/dev/null \
+              && echo "✅ $f" \
+              || echo "⚠️  $f (check not supported, skipping)"
+          done

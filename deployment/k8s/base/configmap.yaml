@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: llm-platform-config
+  namespace: llm-platform
+data:
+  APP_ENV: "production"
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  ROUTER_HOST: "router-service"
+  ROUTER_PORT: "8001"
+  WORKER_HOST: "worker-service"
+  WORKER_PORT: "8002"
+  DEFAULT_MODEL: "gpt2"
+  SMALL_MODEL: "gpt2"
+  LARGE_MODEL: "gpt2-medium"

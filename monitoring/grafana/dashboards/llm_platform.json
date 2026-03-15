@@ -1,0 +1,265 @@
+{
+  "title": "LLM Inference Platform",
+  "uid": "llm-platform-v1",
+  "version": 1,
+  "refresh": "5s",
+  "schemaVersion": 38,
+  "time": { "from": "now-15m", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Request Throughput (req/s)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "sum(rate(gateway_requests_total[1m]))",
+          "legendFormat": "Gateway req/s",
+          "datasource": "Prometheus"
+        },
+        {
+          "expr": "sum(rate(worker_inference_requests_total[1m]))",
+          "legendFormat": "Worker req/s",
+          "datasource": "Prometheus"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "reqps", "color": { "mode": "palette-classic" } }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Inference Latency Percentiles (ms)",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(worker_inference_latency_seconds_bucket[2m])) by (le, model_type)) * 1000",
+          "legendFormat": "p50 {{model_type}}",
+          "datasource": "Prometheus"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(worker_inference_latency_seconds_bucket[2m])) by (le, model_type)) * 1000",
+          "legendFormat": "p95 {{model_type}}",
+          "datasource": "Prometheus"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(worker_inference_latency_seconds_bucket[2m])) by (le, model_type)) * 1000",
+          "legendFormat": "p99 {{model_type}}",
+          "datasource": "Prometheus"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ms", "color": { "mode": "palette-classic" } }
+      }
+    },
+    {
+      "id": 3,
+      "title": "GPU Memory Allocated (GB)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 8, "w": 8, "h": 7 },
+      "targets": [
+        {
+          "expr": "worker_gpu_memory_allocated_gb",
+          "legendFormat": "Allocated GB",
+          "datasource": "Prometheus"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "decgbytes", "min": 0, "max": 4.29,
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 3.0 },
+              { "color": "red", "value": 4.0 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Redis Queue Depth",
+      "type": "timeseries",
+      "gridPos": { "x": 8, "y": 8, "w": 8, "h": 7 },
+      "targets": [
+        {
+          "expr": "redis_queue_depth",
+          "legendFormat": "{{model_type}} queue",
+          "datasource": "Prometheus"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "min": 0,
+          "color": { "mode": "palette-classic" }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Active Gateway Requests",
+      "type": "stat",
+      "gridPos": { "x": 16, "y": 8, "w": 4, "h": 7 },
+      "targets": [
+        {
+          "expr": "gateway_active_requests",
+          "legendFormat": "Active",
+          "datasource": "Prometheus"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 5 },
+              { "color": "red", "value": 10 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Models Loaded",
+      "type": "stat",
+      "gridPos": { "x": 20, "y": 8, "w": 4, "h": 7 },
+      "targets": [
+        {
+          "expr": "worker_models_loaded",
+          "legendFormat": "Models",
+          "datasource": "Prometheus"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": 0 },
+              { "color": "yellow", "value": 1 },
+              { "color": "green", "value": 2 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 7,
+      "title": "Tokens Generated / min",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 15, "w": 12, "h": 7 },
+      "targets": [
+        {
+          "expr": "sum(rate(worker_tokens_generated_total[1m])) by (model_type) * 60",
+          "legendFormat": "{{model_type}} tokens/min",
+          "datasource": "Prometheus"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "color": { "mode": "palette-classic" } }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Rate Limited Requests",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 15, "w": 12, "h": 7 },
+      "targets": [
+        {
+          "expr": "rate(gateway_rate_limited_total[1m])",
+          "legendFormat": "Rate limited req/s",
+          "datasource": "Prometheus"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "reqps",
+          "color": { "fixedColor": "red", "mode": "fixed" }
+        }
+      }
+    },
+    {
+      "id": 9,
+      "title": "Gateway Latency p95 (ms)",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 22, "w": 6, "h": 5 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(gateway_request_latency_seconds_bucket[5m])) by (le)) * 1000",
+          "legendFormat": "p95",
+          "datasource": "Prometheus"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ms",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 500 },
+              { "color": "red", "value": 2000 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 10,
+      "title": "Worker Inference Errors",
+      "type": "stat",
+      "gridPos": { "x": 6, "y": 22, "w": 6, "h": 5 },
+      "targets": [
+        {
+          "expr": "sum(worker_inference_requests_total{status!=\"success\"})",
+          "legendFormat": "Errors",
+          "datasource": "Prometheus"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 11,
+      "title": "Router Routing Strategy",
+      "type": "stat",
+      "gridPos": { "x": 12, "y": 22, "w": 6, "h": 5 },
+      "targets": [
+        {
+          "expr": "sum(router_routed_requests_total) by (model_type)",
+          "legendFormat": "{{model_type}}",
+          "datasource": "Prometheus"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "color": { "mode": "palette-classic" } }
+      }
+    },
+    {
+      "id": 12,
+      "title": "Total Tokens Generated (all time)",
+      "type": "stat",
+      "gridPos": { "x": 18, "y": 22, "w": 6, "h": 5 },
+      "targets": [
+        {
+          "expr": "sum(worker_tokens_generated_total)",
+          "legendFormat": "Total tokens",
+          "datasource": "Prometheus"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "color": { "fixedColor": "blue", "mode": "fixed" } }
+      }
+    }
+  ]
+}

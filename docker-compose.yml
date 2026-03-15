@@ -1,0 +1,111 @@
+services:
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: llm_redis
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  inference-worker:
+    build:
+      context: .
+      dockerfile: deployment/docker/Dockerfile.worker
+    container_name: llm_worker
+    ports:
+      - "8002:8002"
+    environment:
+      - APP_ENV=production
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - WORKER_HOST=0.0.0.0
+      - WORKER_PORT=8002
+      - DEFAULT_MODEL=gpt2
+      - LARGE_MODEL=gpt2-medium
+      - SMALL_MODEL=gpt2
+    volumes:
+      # Cache HuggingFace models so they don't re-download
+      - hf_cache:/root/.cache/huggingface
+    depends_on:
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  router:
+    build:
+      context: .
+      dockerfile: deployment/docker/Dockerfile.router
+    container_name: llm_router
+    ports:
+      - "8001:8001"
+    environment:
+      - APP_ENV=production
+      - ROUTER_HOST=0.0.0.0
+      - ROUTER_PORT=8001
+      - WORKER_HOST=inference-worker
+      - WORKER_PORT=8002
+    depends_on:
+      - inference-worker
+    restart: unless-stopped
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: deployment/docker/Dockerfile.gateway
+    container_name: llm_gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=production
+      - APP_HOST=0.0.0.0
+      - APP_PORT=8000
+      - ROUTER_HOST=router
+      - ROUTER_PORT=8001
+    depends_on:
+      - router
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: llm_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus:/etc/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=7d"
+      - "--web.enable-lifecycle"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: llm_grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/llm_platform.json
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+volumes:
+  hf_cache:

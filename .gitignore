@@ -1,0 +1,33 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Environment
+.env
+*.env.local
+
+# Docker
+*.tar
+
+# HuggingFace cache
+.cache/
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,19 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: "api-gateway"
+    static_configs:
+      - targets: ["api-gateway:8000"]
+    metrics_path: /metrics
+
+  - job_name: "model-router"
+    static_configs:
+      - targets: ["router:8001"]
+    metrics_path: /metrics
+
+  - job_name: "inference-worker"
+    static_configs:
+      - targets: ["inference-worker:8002"]
+    metrics_path: /metrics

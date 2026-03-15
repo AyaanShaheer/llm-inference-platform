@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inference-worker
+  namespace: llm-platform
+  labels:
+    app: inference-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: inference-worker
+  template:
+    metadata:
+      labels:
+        app: inference-worker
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8002"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: inference-worker
+          image: llm-inference-platform-inference-worker:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8002
+          envFrom:
+            - configMapRef:
+                name: llm-platform-config
+          env:
+            - name: WORKER_HOST
+              value: "0.0.0.0"
+            - name: WORKER_PORT
+              value: "8002"
+          resources:
+            requests:
+              memory: "4Gi"
+              cpu: "1000m"
+            limits:
+              memory: "8Gi"
+              cpu: "4000m"
+              # Uncomment for GPU nodes:
+              # nvidia.com/gpu: "1"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8002
+            initialDelaySeconds: 120
+            periodSeconds: 15
+            failureThreshold: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8002
+            initialDelaySeconds: 180
+            periodSeconds: 30
+            failureThreshold: 3
+          volumeMounts:
+            - name: hf-cache
+              mountPath: /root/.cache/huggingface
+      volumes:
+        - name: hf-cache
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: worker-service
+  namespace: llm-platform
+spec:
+  selector:
+    app: inference-worker
+  ports:
+    - port: 8002
+      targetPort: 8002
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: worker-hpa
+  namespace: llm-platform
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: inference-worker
+  minReplicas: 1
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
