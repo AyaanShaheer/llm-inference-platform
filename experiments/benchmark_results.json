@@ -1,0 +1,134 @@
+[
+  {
+    "model": "gpt2",
+    "precision": "fp32",
+    "batch_size": 1,
+    "max_new_tokens": 100,
+    "p50_ms": 856.73,
+    "p95_ms": 954.32,
+    "p99_ms": 1010.02,
+    "mean_ms": 862.34,
+    "throughput_tokens_per_sec": 115.96
+  },
+  {
+    "model": "gpt2",
+    "precision": "fp16",
+    "batch_size": 1,
+    "max_new_tokens": 100,
+    "p50_ms": 974.95,
+    "p95_ms": 1193.41,
+    "p99_ms": 1218.94,
+    "mean_ms": 1017.06,
+    "throughput_tokens_per_sec": 98.32
+  },
+  {
+    "model": "gpt2",
+    "precision": "fp16",
+    "batch_size": 1,
+    "max_new_tokens": 100,
+    "p50_ms": 1027.71,
+    "p95_ms": 1612.89,
+    "p99_ms": 1779.98,
+    "mean_ms": 1092.02,
+    "throughput_tokens_per_sec": 91.57
+  },
+  {
+    "model": "gpt2",
+    "precision": "fp16",
+    "batch_size": 2,
+    "max_new_tokens": 100,
+    "p50_ms": 1173.08,
+    "p95_ms": 1405.29,
+    "p99_ms": 1443.29,
+    "mean_ms": 1210.36,
+    "throughput_tokens_per_sec": 165.24
+  },
+  {
+    "model": "gpt2",
+    "precision": "fp16",
+    "batch_size": 4,
+    "max_new_tokens": 100,
+    "p50_ms": 1273.1,
+    "p95_ms": 1359.58,
+    "p99_ms": 1365.81,
+    "mean_ms": 1267.48,
+    "throughput_tokens_per_sec": 315.59
+  },
+  {
+    "model": "gpt2",
+    "precision": "fp16",
+    "batch_size": 8,
+    "max_new_tokens": 100,
+    "p50_ms": 1209.58,
+    "p95_ms": 1306.74,
+    "p99_ms": 1346.07,
+    "mean_ms": 1215.25,
+    "throughput_tokens_per_sec": 658.3
+  },
+  {
+    "model": "gpt2",
+    "precision": "fp16",
+    "batch_size": 1,
+    "max_new_tokens": 100,
+    "p50_ms": 1093.61,
+    "p95_ms": 1209.31,
+    "p99_ms": 1220.22,
+    "mean_ms": 1099.03,
+    "throughput_tokens_per_sec": 90.99
+  },
+  {
+    "model": "gpt2-medium",
+    "precision": "fp16",
+    "batch_size": 1,
+    "max_new_tokens": 100,
+    "p50_ms": 2083.89,
+    "p95_ms": 2541.35,
+    "p99_ms": 2553.6,
+    "mean_ms": 2143.87,
+    "throughput_tokens_per_sec": 46.64
+  },
+  {
+    "model": "gpt2",
+    "precision": "fp16",
+    "batch_size": 1,
+    "max_new_tokens": 50,
+    "p50_ms": 546.39,
+    "p95_ms": 685.45,
+    "p99_ms": 732.04,
+    "mean_ms": 567.17,
+    "throughput_tokens_per_sec": 88.16
+  },
+  {
+    "model": "gpt2",
+    "precision": "fp16",
+    "batch_size": 1,
+    "max_new_tokens": 100,
+    "p50_ms": 1007.42,
+    "p95_ms": 1242.24,
+    "p99_ms": 1347.4,
+    "mean_ms": 1041.47,
+    "throughput_tokens_per_sec": 96.02
+  },
+  {
+    "model": "gpt2",
+    "precision": "fp16",
+    "batch_size": 1,
+    "max_new_tokens": 200,
+    "p50_ms": 1940.96,
+    "p95_ms": 2256.74,
+    "p99_ms": 2270.42,
+    "mean_ms": 2015.41,
+    "throughput_tokens_per_sec": 99.24
+  },
+  {
+    "model": "gpt2",
+    "precision": "fp16",
+    "batch_size": 1,
+    "max_new_tokens": 400,
+    "p50_ms": 4085.41,
+    "p95_ms": 4459.71,
+    "p99_ms": 4505.41,
+    "mean_ms": 4129.71,
+    "throughput_tokens_per_sec": 96.86
+  }
+]
