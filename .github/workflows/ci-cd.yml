@@ -1,4 +1,4 @@
-name: CI/CD Pipeline — LLM Inference Platform
+name: CI/CD Pipeline - LLM Inference Platform
 
 on:
   push:
@@ -11,13 +11,9 @@ env:
   IMAGE_PREFIX: ${{ secrets.DOCKERHUB_USERNAME }}/llm-platform
 
 jobs:
-  # ─────────────────────────────────────────
-  # JOB 1: Lint + Test
-  # ─────────────────────────────────────────
   test:
     name: Lint & Test
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -65,15 +61,11 @@ jobs:
               && echo "OK: $f" || (echo "INVALID: $f" && exit 1)
           done
 
-  # ─────────────────────────────────────────
-  # JOB 2: Build & Push Docker Images
-  # ─────────────────────────────────────────
   build:
     name: Build & Push Images
     runs-on: ubuntu-latest
     needs: test
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -91,7 +83,6 @@ jobs:
         id: meta
         run: |
           echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-          echo "timestamp=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
 
       - name: Build and Push API Gateway
         uses: docker/build-push-action@v5
@@ -138,49 +129,6 @@ jobs:
           echo "| router | ${{ steps.meta.outputs.sha_short }} |" >> $GITHUB_STEP_SUMMARY
           echo "| inference-worker | ${{ steps.meta.outputs.sha_short }} |" >> $GITHUB_STEP_SUMMARY
 
-  # ─────────────────────────────────────────
-  # JOB 3: Deploy to Kubernetes
-  # ─────────────────────────────────────────
-  deploy:
-    name: Deploy to Kubernetes
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v3
-        with:
-          version: "v1.29.0"
-
-      - name: Configure kubeconfig
-        run: |
-          mkdir -p ~/.kube
-          echo "${{ secrets.KUBECONFIG_B64 }}" | base64 -d > ~/.kube/config
-          chmod 600 ~/.kube/config
-
-      - name: Extract git SHA
-        id: meta
-        run: |
-          echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-
-      - name: Update image tags in manifests
-        run: |
-          sed -i "s|llm-inference-platform-inference-worker:latest|${{ env.IMAGE_PREFIX }}-inference-worker:${{ steps.meta.outputs.sha_short }}|g" deployment/k8s/base/worker.yaml
-          sed -i "s|llm-inference-platform-router:latest|${{ env.IMAGE_PREFIX }}-router:${{ steps.meta.outputs.sha_short }}|g" deployment/k8s/base/router.yaml
-          sed -i "s|llm-inference-platform-api-gateway:latest|${{ env.IMAGE_PREFIX }}-api-gateway:${{ steps.meta.outputs.sha_short }}|g" deployment/k8s/base/gateway.yaml
-
-      - name: Apply Kubernetes manifests
-        run: |
-          kubectl apply -k deployment/k8s/base/
-          kubectl rollout status deployment/api-gateway -n llm-platform --timeout=120s
-          kubectl rollout status deployment/router -n llm-platform --timeout=120s
-          kubectl rollout status deployment/inference-worker -n llm-platform --timeout=300s
-
-      - name: Verify deployment
-        run: |
-          kubectl get pods -n llm-platform
-          kubectl get services -n llm-platform
+  # Deploy job intentionally omitted until a Kubernetes cluster is provisioned.
+  # To enable: add a deploy job with KUBECONFIG_B64 secret pointing to a real cluster.
+  # Manifest templates are ready in deployment/k8s/base/
